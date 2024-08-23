@@ -9,7 +9,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.betclic.fr/*"],
+      "matches": ["https://www.unibet.fr/*", "https://www.betclic.fr/*"],
       "js": ["content.js"]
     }
   ],

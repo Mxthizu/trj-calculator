@@ -1,7 +1,7 @@
 function calculateTRJ(odds) {
   let inverseSum = 0;
   odds.forEach((odd) => {
-    inverseSum += 1 / parseFloat(odd.replace(",", "."));
+    inverseSum += 1 / parseFloat(odd.replace(",", ".")); // Remplacer la virgule par un point pour les nombres décimaux
   });
   let trj = (1 / inverseSum) * 100;
   return trj.toFixed(2) + "%";
@@ -47,7 +47,8 @@ function getOdds() {
 
 function calculateAndDisplayTRJ() {
   const odds = getOdds();
-  if (odds.length === 3) {
+  if (odds.length === 2 || odds.length === 3) {
+    // Gérer 2 ou 3 cotes
     const trj = calculateTRJ(odds);
     console.log("TRJ calculé : " + trj);
     return trj;
@@ -55,7 +56,7 @@ function calculateAndDisplayTRJ() {
     console.log(
       "Nombre de cotes détectées : " +
         odds.length +
-        ". Uniquement trois cotes sont nécessaires pour calculer un TRJ à 3 issues."
+        ". Deux ou trois cotes sont nécessaires pour calculer un TRJ."
     );
     return "N/A";
   }

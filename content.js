@@ -51,45 +51,75 @@ function getOddsForUnibet() {
   return odds;
 }
 
+function getOddsForParionsSport() {
+  const marketBlock = document.querySelector(".psel-market-component");
+
+  if (!marketBlock) {
+    console.log("MarketBlock non trouvé sur ParionsSport.");
+    return [];
+  }
+
+  const oddsElements = marketBlock.querySelectorAll(".psel-outcome__data");
+  let odds = [];
+  oddsElements.forEach((element) => {
+    const oddValue = element.textContent.trim();
+    odds.push(oddValue);
+  });
+
+  console.log("Cotes trouvées sur ParionsSport :", odds);
+  return odds;
+}
+
 function calculateAndDisplayTRJ() {
   let odds = [];
 
   if (window.location.hostname.includes("betclic.fr")) {
-    // Pour Betclic
     odds = getOddsForBetclic();
   } else if (window.location.hostname.includes("unibet.fr")) {
-    // Pour Unibet
     odds = getOddsForUnibet();
+  } else if (window.location.hostname.includes("enligne.parionssport.fdj.fr")) {
+    odds = getOddsForParionsSport();
   }
 
   if (odds.length === 3) {
     let trj = calculateTRJ(odds);
     console.log("TRJ calculé : " + trj);
+    return trj;
   } else {
     console.log(
       "Nombre de cotes détectées : " +
         odds.length +
         ". Uniquement trois cotes sont nécessaires pour calculer un TRJ à 3 issues."
     );
+    return "N/A";
   }
 }
 
-// Utilisation d'un MutationObserver pour Unibet
-function observeDOMForUnibet() {
+// Utilisation d'un MutationObserver pour les sites qui chargent dynamiquement le contenu
+function observeDOMForDynamicSites() {
   const targetNode = document.body;
   const config = { childList: true, subtree: true };
 
   const callback = function (mutationsList, observer) {
     for (let mutation of mutationsList) {
       if (mutation.type === "childList") {
-        const marketBlock = document.querySelector(
-          "section#cps-marketcard.marketcard .marketcard-content"
-        );
+        let marketBlock = null;
+
+        if (window.location.hostname.includes("unibet.fr")) {
+          marketBlock = document.querySelector(
+            "section#cps-marketcard.marketcard .marketcard-content"
+          );
+        } else if (
+          window.location.hostname.includes("enligne.parionssport.fdj.fr")
+        ) {
+          marketBlock = document.querySelector(".psel-market-component");
+        }
+
         if (marketBlock) {
           console.log("MarketBlock trouvé, arrêt de l'observation.");
           observer.disconnect(); // Arrête d'observer après avoir trouvé le marketBlock
-          calculateAndDisplayTRJ();
-          break;
+          const trj = calculateAndDisplayTRJ();
+          return trj;
         }
       }
     }
@@ -100,8 +130,11 @@ function observeDOMForUnibet() {
 }
 
 window.addEventListener("load", function () {
-  if (window.location.hostname.includes("unibet.fr")) {
-    observeDOMForUnibet();
+  if (
+    window.location.hostname.includes("unibet.fr") ||
+    window.location.hostname.includes("enligne.parionssport.fdj.fr")
+  ) {
+    observeDOMForDynamicSites();
   } else {
     calculateAndDisplayTRJ();
   }

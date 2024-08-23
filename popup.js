@@ -48,11 +48,33 @@ document.addEventListener("DOMContentLoaded", function () {
             return odds;
           }
 
+          function getOddsForParionsSport() {
+            const marketBlock = document.querySelector(
+              ".psel-market-component"
+            );
+            if (!marketBlock) return [];
+
+            const oddsElements = marketBlock.querySelectorAll(
+              ".psel-outcome__data"
+            );
+            let odds = [];
+            oddsElements.forEach((element) => {
+              const oddValue = element.textContent.trim();
+              odds.push(oddValue);
+            });
+
+            return odds;
+          }
+
           let odds = [];
           if (window.location.hostname.includes("betclic.fr")) {
             odds = getOddsForBetclic();
           } else if (window.location.hostname.includes("unibet.fr")) {
             odds = getOddsForUnibet();
+          } else if (
+            window.location.hostname.includes("enligne.parionssport.fdj.fr")
+          ) {
+            odds = getOddsForParionsSport();
           }
 
           if (odds.length === 3) {

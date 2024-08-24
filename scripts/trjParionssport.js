@@ -1,14 +1,12 @@
 import { calculateTRJ } from "./trjCalculator.js";
 import { getTRJColor } from "./widget.js";
 
-function logMatchInfoBetclic(marketElement) {
-  const teamElements = marketElement.querySelectorAll(
-    ".btn.is-odd .btn_label.is-top"
-  );
+function logMatchInfoParionssport(marketElement) {
+  const teamElements = marketElement.querySelectorAll(".psel-opponent__name");
   const teams = [];
 
   teamElements.forEach((element) => {
-    const teamName = element.textContent.trim().replace(/\s+/g, " ");
+    const teamName = element.textContent.trim();
     if (teamName) {
       teams.push(teamName);
     }
@@ -21,10 +19,8 @@ function logMatchInfoBetclic(marketElement) {
   }
 }
 
-function addTRJToMarketBetclic(marketElement) {
-  const oddsElements = marketElement.querySelectorAll(
-    ".btn.is-odd .btn_label:not(.is-top)"
-  );
+function addTRJToMarketParionssport(marketElement) {
+  const oddsElements = marketElement.querySelectorAll(".psel-outcome__data");
   const odds = [];
   let invalidOddFound = false;
 
@@ -70,12 +66,12 @@ function addTRJToMarketBetclic(marketElement) {
     const trjColor = getTRJColor(trj);
     trjElement.style.color = trjColor;
 
-    // Trouver la div <sports-row-col> et insérer le TRJ à l'intérieur à la fin
-    const sportsRowColElement = marketElement.querySelector("sports-row-col");
-    if (sportsRowColElement) {
-      sportsRowColElement.appendChild(trjElement); // Insérer le TRJ à la fin
+    // Trouver la div <psel-row-col> et insérer le TRJ à l'intérieur à la fin
+    const pselRowColElement = marketElement.querySelector("psel-row-col");
+    if (pselRowColElement) {
+      pselRowColElement.appendChild(trjElement); // Insérer le TRJ à la fin
     } else {
-      console.log("<sports-row-col> introuvable, ajout du TRJ par défaut.");
+      console.log("<psel-row-col> introuvable, ajout du TRJ par défaut.");
       marketElement.appendChild(trjElement);
     }
   } else {
@@ -85,8 +81,8 @@ function addTRJToMarketBetclic(marketElement) {
   }
 }
 
-function processBetclicMarketElements() {
-  const marketElements = document.querySelectorAll("sports-markets-default-v2");
+function processParionssportMarketElements() {
+  const marketElements = document.querySelectorAll("psel-event-main");
 
   console.log(`Nombre total de marchés trouvés: ${marketElements.length}`);
 
@@ -95,8 +91,8 @@ function processBetclicMarketElements() {
       if (!marketElement.hasAttribute("data-trj-processed")) {
         console.log(`Traitement du marché ${index + 1}`);
 
-        logMatchInfoBetclic(marketElement);
-        addTRJToMarketBetclic(marketElement);
+        logMatchInfoParionssport(marketElement);
+        addTRJToMarketParionssport(marketElement);
 
         marketElement.setAttribute("data-trj-processed", "true");
       }
@@ -106,14 +102,16 @@ function processBetclicMarketElements() {
   });
 }
 
-export function observeBetclicMarkets() {
-  processBetclicMarketElements(); // Traiter les éléments déjà présents au chargement de la page
+export function observeParionsSportMarkets() {
+  processParionssportMarketElements();
 
   const observer = new MutationObserver(() => {
-    processBetclicMarketElements(); // Traiter les nouveaux éléments ajoutés dynamiquement
+    processParionssportMarketElements();
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
 
-  console.log("Observation des changements dans le DOM pour Betclic activée.");
+  console.log(
+    "Observation des changements dans le DOM pour ParionsSport activée."
+  );
 }

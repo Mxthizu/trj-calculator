@@ -1,14 +1,11 @@
 import { calculateTRJ } from "./trjCalculator.js";
-import { getTRJColor } from "./widget.js";
 
-function logMatchInfoBetclic(marketElement) {
-  const teamElements = marketElement.querySelectorAll(
-    ".btn.is-odd .btn_label.is-top"
-  );
+function logMatchInfoUnibet(marketElement) {
+  const teamElements = marketElement.querySelectorAll(".oddbox-label span");
   const teams = [];
 
   teamElements.forEach((element) => {
-    const teamName = element.textContent.trim().replace(/\s+/g, " ");
+    const teamName = element.textContent.trim();
     if (teamName) {
       teams.push(teamName);
     }
@@ -21,9 +18,9 @@ function logMatchInfoBetclic(marketElement) {
   }
 }
 
-function addTRJToMarketBetclic(marketElement) {
+function addTRJToMarketUnibet(marketElement) {
   const oddsElements = marketElement.querySelectorAll(
-    ".btn.is-odd .btn_label:not(.is-top)"
+    ".oddbox-content .oddbox-value span"
   );
   const odds = [];
   let invalidOddFound = false;
@@ -42,9 +39,9 @@ function addTRJToMarketBetclic(marketElement) {
     const trjElement = document.createElement("div");
     trjElement.textContent = "TRJ: Non calculable";
     trjElement.style.fontWeight = "bold";
-    trjElement.style.color = "#FF0000";
+    trjElement.style.color = "#FF0000"; // Rouge pour signaler une erreur
     trjElement.style.marginTop = "10px";
-    trjElement.style.fontSize = "16px";
+    trjElement.style.zIndex = "10";
     trjElement.style.textAlign = "center";
     marketElement.appendChild(trjElement);
     return;
@@ -61,21 +58,34 @@ function addTRJToMarketBetclic(marketElement) {
     const trjElement = document.createElement("div");
     trjElement.textContent = `TRJ: ${trj}`;
     trjElement.style.fontWeight = "bold";
-    trjElement.style.marginTop = "10px";
+    trjElement.style.marginTop = "5px"; // Espace entre les cotes et le TRJ
     trjElement.style.zIndex = "10";
-    trjElement.style.fontSize = "16px";
     trjElement.style.textAlign = "center";
 
     // Appliquer la couleur en fonction du TRJ
-    const trjColor = getTRJColor(trj);
-    trjElement.style.color = trjColor;
+    const trjValue = parseFloat(trj.replace("%", ""));
+    if (trjValue < 80) {
+      trjElement.style.color = "#FF0000"; // Rouge pour TRJ défavorable
+    } else if (trjValue >= 80 && trjValue < 90) {
+      trjElement.style.color = "#FFA500"; // Orange pour TRJ correct
+    } else if (trjValue >= 90 && trjValue <= 100) {
+      trjElement.style.color = "#008000"; // Vert pour TRJ favorable
+    } else if (trjValue > 100) {
+      trjElement.style.color = "#0000FF"; // Bleu pour situation de surebet
+    }
 
-    // Trouver la div <sports-row-col> et insérer le TRJ à l'intérieur à la fin
-    const sportsRowColElement = marketElement.querySelector("sports-row-col");
-    if (sportsRowColElement) {
-      sportsRowColElement.appendChild(trjElement); // Insérer le TRJ à la fin
+    // Insérer le TRJ à la fin de l'élément odds__container
+    const oddsWrapper = marketElement.closest(".odds__container");
+    if (oddsWrapper) {
+      oddsWrapper.appendChild(trjElement);
+
+      // Ajouter le style height: auto à l'élément parent contenant la classe odds__wrapper
+      const wrapperElement = oddsWrapper.closest(".odds__wrapper");
+      if (wrapperElement) {
+        wrapperElement.style.height = "auto";
+      }
     } else {
-      console.log("<sports-row-col> introuvable, ajout du TRJ par défaut.");
+      console.log("odds__container introuvable, ajout du TRJ par défaut.");
       marketElement.appendChild(trjElement);
     }
   } else {
@@ -85,8 +95,8 @@ function addTRJToMarketBetclic(marketElement) {
   }
 }
 
-function processBetclicMarketElements() {
-  const marketElements = document.querySelectorAll("sports-markets-default-v2");
+function processUnibetMarkets() {
+  const marketElements = document.querySelectorAll(".eventcard-footer");
 
   console.log(`Nombre total de marchés trouvés: ${marketElements.length}`);
 
@@ -95,9 +105,10 @@ function processBetclicMarketElements() {
       if (!marketElement.hasAttribute("data-trj-processed")) {
         console.log(`Traitement du marché ${index + 1}`);
 
-        logMatchInfoBetclic(marketElement);
-        addTRJToMarketBetclic(marketElement);
+        logMatchInfoUnibet(marketElement);
+        addTRJToMarketUnibet(marketElement);
 
+        // Marquer cet élément comme traité
         marketElement.setAttribute("data-trj-processed", "true");
       }
     } catch (error) {
@@ -106,14 +117,14 @@ function processBetclicMarketElements() {
   });
 }
 
-export function observeBetclicMarkets() {
-  processBetclicMarketElements(); // Traiter les éléments déjà présents au chargement de la page
+export function observeUnibetMarkets() {
+  processUnibetMarkets(); // Traiter les éléments déjà présents au chargement de la page
 
   const observer = new MutationObserver(() => {
-    processBetclicMarketElements(); // Traiter les nouveaux éléments ajoutés dynamiquement
+    processUnibetMarkets(); // Traiter les nouveaux éléments ajoutés dynamiquement
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
 
-  console.log("Observation des changements dans le DOM pour Betclic activée.");
+  console.log("Observation des changements dans le DOM activée pour Unibet.");
 }

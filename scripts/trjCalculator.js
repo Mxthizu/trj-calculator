@@ -10,13 +10,17 @@ export function calculateTRJ(odds) {
   return trj.toFixed(2) + "%";
 }
 
-export function calculateAndDisplayTRJ() {
+export function calculateAndDisplayTRJ(singleMatch = false) {
   getOdds()
     .then((odds) => {
       if (odds.length === 2 || odds.length === 3) {
         const trj = calculateTRJ(odds);
         console.log("TRJ calculé : " + trj);
-        createOrUpdateTRJWidget(trj);
+
+        // Si c'est une page de match unique, on affiche l'encart
+        if (singleMatch) {
+          createOrUpdateTRJWidget(trj);
+        }
       } else {
         console.log(
           "Nombre de cotes détectées : " +

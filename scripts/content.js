@@ -1,19 +1,66 @@
-import { observeMarkets, observeMatchPage } from "./trjBetclic.js";
-import { observeWinamaxMarkets } from "./trjWinamax.js";
-import { monitorURLChange } from "./urlMonitor.js";
 import { calculateAndDisplayTRJ } from "./trjCalculator.js";
+import { observeBetclicMarkets } from "./trjBetclic.js"; // Mise à jour ici
+import { observeWinamaxMarkets } from "./trjWinamax.js";
+import { observeUnibetMarkets } from "./trjUnibet.js";
+import { observeParionsSportMarkets } from "./trjParionssport.js";
+import { monitorURLChange } from "./urlMonitor.js";
+
+function isParionsSportMatchPage(url) {
+  const match = url.match(/\/(\d+)\//);
+  return match ? match[1] : null;
+}
+
+function isBetclicMatchPage(url) {
+  const match = url.match(/-m(\d{4,})/);
+  return match ? match[1] : null;
+}
+
+function handlePageLogic() {
+  const hostname = window.location.hostname;
+  const currentUrl = window.location.href;
+
+  if (hostname.includes("betclic.fr")) {
+    const isMatchPage = isBetclicMatchPage(currentUrl);
+
+    if (isMatchPage) {
+      calculateAndDisplayTRJ(true);
+    } else {
+      observeBetclicMarkets(); // Utilisation de la nouvelle fonction
+      calculateAndDisplayTRJ(false); // Page listant plusieurs matchs
+    }
+  } else if (hostname.includes("winamax.fr")) {
+    const isMatchPage = currentUrl.includes("match");
+
+    if (isMatchPage) {
+      calculateAndDisplayTRJ(true); // Page de match unique
+    } else {
+      observeWinamaxMarkets();
+      calculateAndDisplayTRJ(false); // Page listant plusieurs matchs
+    }
+  } else if (hostname.includes("unibet.fr")) {
+    const isMatchPage = currentUrl.includes("event");
+
+    if (isMatchPage) {
+      calculateAndDisplayTRJ(true); // Page de match unique
+    } else {
+      observeUnibetMarkets();
+      calculateAndDisplayTRJ(false); // Page listant plusieurs matchs
+    }
+  } else if (hostname.includes("enligne.parionssport.fdj.fr")) {
+    const isMatchPage = isParionsSportMatchPage(currentUrl);
+
+    if (isMatchPage) {
+      calculateAndDisplayTRJ(true); // Page de match unique
+    } else {
+      observeParionsSportMarkets();
+      calculateAndDisplayTRJ(false); // Page listant plusieurs matchs
+    }
+  }
+}
 
 window.addEventListener("load", function () {
-  if (window.location.hostname.includes("betclic.fr")) {
-    // Détection d'une page de match individuel sur Betclic par la structure de la page
+  handlePageLogic();
 
-    observeMarkets(); // Pour les pages listant plusieurs matchs
-    monitorURLChange(observeMarkets); // Recommence l'observation à chaque changement d'URL
-  } else if (window.location.hostname.includes("winamax.fr")) {
-    observeWinamaxMarkets(); // Pour les pages listant plusieurs matchs sur Winamax
-    monitorURLChange(observeWinamaxMarkets); // Recommence l'observation à chaque changement d'URL
-  }
-
-  calculateAndDisplayTRJ();
-  monitorURLChange(); // Calcul du TRJ sur les pages correspondantes
+  // Surveiller les changements d'URL pour appliquer la logique TRJ
+  monitorURLChange(handlePageLogic);
 });

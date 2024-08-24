@@ -13,6 +13,7 @@ export function getTRJColor(trj) {
 }
 
 export function createOrUpdateTRJWidget(trj) {
+  console.log("crea widget");
   let widget = document.getElementById("trj-widget");
 
   if (!widget) {
@@ -26,6 +27,7 @@ export function createOrUpdateTRJWidget(trj) {
     widget.style.borderRadius = "8px";
     widget.style.boxShadow = "0 2px 10px rgba(0, 0, 0, 0.1)";
     widget.style.zIndex = "1000";
+    widget.style.fontSize = "14px";
     document.body.appendChild(widget);
   }
 

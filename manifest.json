@@ -15,7 +15,7 @@
         "https://enligne.parionssport.fdj.fr/*",
         "https://www.winamax.fr/*"
       ],
-      "js": ["content.js"]
+      "js": ["dist/content.js"]
     }
   ],
   "action": {

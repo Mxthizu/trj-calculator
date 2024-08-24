@@ -1,3 +1,50 @@
+function waitForElement(selector, timeout = 5000) {
+  return new Promise((resolve, reject) => {
+    const interval = 100;
+    let elapsedTime = 0;
+
+    const checkElement = () => {
+      const element = document.querySelector(selector);
+      if (element) {
+        resolve(element);
+      } else if (elapsedTime >= timeout) {
+        reject(new Error("Element not found: " + selector));
+      } else {
+        elapsedTime += interval;
+        setTimeout(checkElement, interval);
+      }
+    };
+
+    checkElement();
+  });
+}
+
+function findWinamaxElement(timeout = 5000) {
+  return new Promise((resolve, reject) => {
+    const interval = 100;
+    let elapsedTime = 0;
+
+    const checkElement = () => {
+      const resultatElement = Array.from(document.querySelectorAll("div")).find(
+        (div) =>
+          div.textContent.trim() === "Résultat" ||
+          div.textContent.trim() === "Vainqueur"
+      );
+
+      if (resultatElement) {
+        resolve(resultatElement);
+      } else if (elapsedTime >= timeout) {
+        reject(new Error("Élément 'Résultat' ou 'Vainqueur' non trouvé"));
+      } else {
+        elapsedTime += interval;
+        setTimeout(checkElement, interval);
+      }
+    };
+
+    checkElement();
+  });
+}
+
 function calculateTRJ(odds) {
   let inverseSum = 0;
   odds.forEach((odd) => {
@@ -11,118 +58,124 @@ function getOdds() {
   let odds = [];
 
   if (window.location.hostname.includes("betclic.fr")) {
-    const marketBlock = document.querySelector(
+    return waitForElement(
       "sports-match-markets sports-markets-single-market .marketBox.is-table"
-    );
-    if (marketBlock) {
+    ).then((marketBlock) => {
       const oddsElements = marketBlock.querySelectorAll(
         ".btn.is-odd .btn_label:not(.is-top)"
       );
       oddsElements.forEach((element) => {
         odds.push(element.textContent.trim());
       });
-    }
+      return odds;
+    });
   } else if (window.location.hostname.includes("unibet.fr")) {
-    const marketBlock = document.querySelector(
+    return waitForElement(
       "section#cps-marketcard.marketcard .marketcard-content"
-    );
-    if (marketBlock) {
+    ).then((marketBlock) => {
       const oddsElements = marketBlock.querySelectorAll(".oddbox-value span");
       oddsElements.forEach((element) => {
         odds.push(element.textContent.trim());
       });
-    }
+      return odds;
+    });
   } else if (window.location.hostname.includes("enligne.parionssport.fdj.fr")) {
-    const marketBlock = document.querySelector(".psel-market-component");
-    if (marketBlock) {
+    return waitForElement(".psel-market-component").then((marketBlock) => {
       const oddsElements = marketBlock.querySelectorAll(".psel-outcome__data");
       oddsElements.forEach((element) => {
         odds.push(element.textContent.trim());
       });
-    }
+      return odds;
+    });
   } else if (window.location.hostname.includes("winamax.fr")) {
-    // Trouver l'élément contenant le texte "Résultat"
-    const resultatElement = Array.from(document.querySelectorAll("div")).find(
-      (div) =>
-        div.textContent.trim() === "Résultat" ||
-        div.textContent.trim() === "Vainqueur"
-    );
-
-    if (resultatElement) {
-      // Remonter aux parents pertinents jusqu'à la div qui englobe toutes les cotes
+    return findWinamaxElement().then((resultatElement) => {
       const coteContainer =
         resultatElement.closest("div").parentElement.parentElement
           .parentElement;
 
-      // Extraire les cotes dans cet ensemble
       const oddsElements = coteContainer.querySelectorAll(".sc-eubriu.lbhvOG");
 
       oddsElements.forEach((element) => {
         odds.push(element.textContent.trim());
       });
-    }
+      return odds;
+    });
   }
 
-  return odds;
+  return Promise.resolve(odds);
+}
+
+function getTRJColor(trj) {
+  const trjValue = parseFloat(trj.replace("%", ""));
+
+  if (trjValue < 80) {
+    return "#FF0000"; // Rouge pour TRJ défavorable
+  } else if (trjValue >= 80 && trjValue < 90) {
+    return "#FFA500"; // Orange pour TRJ correct
+  } else if (trjValue >= 90 && trjValue <= 100) {
+    return "#008000"; // Vert pour TRJ favorable
+  } else if (trjValue > 100) {
+    return "#0000FF"; // Bleu pour situation de surebet
+  }
+}
+
+function createOrUpdateTRJWidget(trj) {
+  let widget = document.getElementById("trj-widget");
+
+  if (!widget) {
+    widget = document.createElement("div");
+    widget.id = "trj-widget";
+    widget.style.position = "fixed";
+    widget.style.bottom = "20px";
+    widget.style.right = "20px";
+    widget.style.padding = "10px";
+    widget.style.color = "white";
+    widget.style.borderRadius = "8px";
+    widget.style.boxShadow = "0 2px 10px rgba(0, 0, 0, 0.1)";
+    widget.style.zIndex = "1000";
+    document.body.appendChild(widget);
+  }
+
+  const backgroundColor = getTRJColor(trj);
+  widget.style.backgroundColor = backgroundColor;
+  widget.innerHTML = `<strong>TRJ Calculé :</strong> ${trj}`;
 }
 
 function calculateAndDisplayTRJ() {
-  const odds = getOdds();
-  if (odds.length === 2 || odds.length === 3) {
-    // Gérer 2 ou 3 cotes
-    const trj = calculateTRJ(odds);
-    console.log("TRJ calculé : " + trj);
-    return trj;
-  } else {
-    console.log(
-      "Nombre de cotes détectées : " +
-        odds.length +
-        ". Deux ou trois cotes sont nécessaires pour calculer un TRJ."
-    );
-    return "N/A";
-  }
+  getOdds()
+    .then((odds) => {
+      if (odds.length === 2 || odds.length === 3) {
+        const trj = calculateTRJ(odds);
+        console.log("TRJ calculé : " + trj);
+        createOrUpdateTRJWidget(trj);
+      } else {
+        console.log(
+          "Nombre de cotes détectées : " +
+            odds.length +
+            ". Deux ou trois cotes sont nécessaires pour calculer un TRJ."
+        );
+      }
+    })
+    .catch((error) => {
+      console.error("Erreur lors de l'obtention des cotes:", error);
+    });
 }
 
-function observeDOMForDynamicSites() {
-  const targetNode = document.body;
-  const config = { childList: true, subtree: true };
+function monitorURLChange() {
+  let lastUrl = window.location.href;
 
-  const callback = function (mutationsList, observer) {
-    let marketBlock = null;
-
-    if (window.location.hostname.includes("unibet.fr")) {
-      marketBlock = document.querySelector(
-        "section#cps-marketcard.marketcard .marketcard-content"
-      );
-    } else if (
-      window.location.hostname.includes("enligne.parionssport.fdj.fr")
-    ) {
-      marketBlock = document.querySelector(".psel-market-component");
-    } else if (window.location.hostname.includes("winamax.fr")) {
-      marketBlock = Array.from(document.querySelectorAll("div")).find(
-        (div) => div.textContent.trim() === "Résultat"
-      );
+  const observer = new MutationObserver(() => {
+    const currentUrl = window.location.href;
+    if (currentUrl !== lastUrl) {
+      lastUrl = currentUrl;
+      calculateAndDisplayTRJ(); // Recalculer le TRJ à chaque changement d'URL
     }
+  });
 
-    if (marketBlock) {
-      observer.disconnect();
-      const trj = calculateAndDisplayTRJ();
-      return trj;
-    }
-  };
-
-  const observer = new MutationObserver(callback);
-  observer.observe(targetNode, config);
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 window.addEventListener("load", function () {
-  if (
-    window.location.hostname.includes("unibet.fr") ||
-    window.location.hostname.includes("enligne.parionssport.fdj.fr") ||
-    window.location.hostname.includes("winamax.fr")
-  ) {
-    observeDOMForDynamicSites();
-  } else {
-    calculateAndDisplayTRJ();
-  }
+  calculateAndDisplayTRJ(); // Calcul initial au chargement de la page
+  monitorURLChange(); // Surveiller les changements d'URL
 });

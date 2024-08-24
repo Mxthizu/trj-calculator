@@ -3,23 +3,22 @@
   "name": "TRJ Calculator",
   "version": "1.0",
   "description": "Calculer le Taux de Retour aux Joueurs sur les sites des bookmakers.",
-  "permissions": ["activeTab", "scripting"],
+  "permissions": ["activeTab", "scripting", "webNavigation"],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
       "matches": [
-        "https://www.unibet.fr/*",
         "https://www.betclic.fr/*",
-        "https://www.enligne.parionssport.fdj.fr/*",
-        "https://www.winamax.fr/paris-sportifs/*"
+        "https://www.unibet.fr/*",
+        "https://enligne.parionssport.fdj.fr/*",
+        "https://www.winamax.fr/*"
       ],
       "js": ["content.js"]
     }
   ],
   "action": {
-    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",

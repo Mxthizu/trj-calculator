@@ -40,6 +40,27 @@ function getOdds() {
         odds.push(element.textContent.trim());
       });
     }
+  } else if (window.location.hostname.includes("winamax.fr")) {
+    // Trouver l'élément contenant le texte "Résultat"
+    const resultatElement = Array.from(document.querySelectorAll("div")).find(
+      (div) =>
+        div.textContent.trim() === "Résultat" ||
+        div.textContent.trim() === "Vainqueur"
+    );
+
+    if (resultatElement) {
+      // Remonter aux parents pertinents jusqu'à la div qui englobe toutes les cotes
+      const coteContainer =
+        resultatElement.closest("div").parentElement.parentElement
+          .parentElement;
+
+      // Extraire les cotes dans cet ensemble
+      const oddsElements = coteContainer.querySelectorAll(".sc-eubriu.lbhvOG");
+
+      oddsElements.forEach((element) => {
+        odds.push(element.textContent.trim());
+      });
+    }
   }
 
   return odds;
@@ -77,6 +98,10 @@ function observeDOMForDynamicSites() {
       window.location.hostname.includes("enligne.parionssport.fdj.fr")
     ) {
       marketBlock = document.querySelector(".psel-market-component");
+    } else if (window.location.hostname.includes("winamax.fr")) {
+      marketBlock = Array.from(document.querySelectorAll("div")).find(
+        (div) => div.textContent.trim() === "Résultat"
+      );
     }
 
     if (marketBlock) {
@@ -93,7 +118,8 @@ function observeDOMForDynamicSites() {
 window.addEventListener("load", function () {
   if (
     window.location.hostname.includes("unibet.fr") ||
-    window.location.hostname.includes("enligne.parionssport.fdj.fr")
+    window.location.hostname.includes("enligne.parionssport.fdj.fr") ||
+    window.location.hostname.includes("winamax.fr")
   ) {
     observeDOMForDynamicSites();
   } else {

@@ -12,7 +12,8 @@
       "matches": [
         "https://www.unibet.fr/*",
         "https://www.betclic.fr/*",
-        "https://www.enligne.parionssport.fdj.fr/*"
+        "https://www.enligne.parionssport.fdj.fr/*",
+        "https://www.winamax.fr/paris-sportifs/*"
       ],
       "js": ["content.js"]
     }

@@ -61,9 +61,7 @@ export function getOdds() {
       return odds;
     });
   } else if (window.location.hostname.includes("unibet.fr")) {
-    return waitForElement(
-      "section#cps-marketcard.marketcard .marketcard-content"
-    ).then((marketBlock) => {
+    return waitForElement("section#cps-odds.odds").then((marketBlock) => {
       const oddsElements = marketBlock.querySelectorAll(".oddbox-value span");
       oddsElements.forEach((element) => {
         odds.push(element.textContent.trim());

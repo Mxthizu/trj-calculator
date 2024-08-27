@@ -1,15 +1,12 @@
+// Importation de la fonction pour calculer le TRJ
 import { calculateTRJ } from "./trjCalculator.js";
 
+// Fonction pour extraire et afficher les noms des équipes d'un élément de marché
 function logMatchInfoUnibet(marketElement) {
   const teamElements = marketElement.querySelectorAll(".oddbox-label span");
-  const teams = [];
-
-  teamElements.forEach((element) => {
-    const teamName = element.textContent.trim();
-    if (teamName) {
-      teams.push(teamName);
-    }
-  });
+  const teams = Array.from(teamElements, (el) => el.textContent.trim()).filter(
+    Boolean
+  );
 
   if (teams.length > 0) {
     console.log(`Match trouvé: ${teams.join(" vs ")}`);
@@ -18,112 +15,93 @@ function logMatchInfoUnibet(marketElement) {
   }
 }
 
+// Fonction pour ajouter le TRJ à un élément de marché
 function addTRJToMarketUnibet(marketElement) {
-  const oddsElements = marketElement.querySelectorAll(
-    ".oddbox-content .oddbox-value span"
-  );
-  const odds = [];
-  let invalidOddFound = false;
-
-  oddsElements.forEach((element) => {
-    const oddValue = element.textContent.trim().replace(/\s+/g, "");
-    if (oddValue === "-" || isNaN(parseFloat(oddValue))) {
-      invalidOddFound = true;
-    } else {
-      odds.push(oddValue);
-    }
-  });
-
-  if (invalidOddFound) {
-    console.log("Cote invalide détectée. TRJ non calculable pour ce match.");
-    const trjElement = document.createElement("div");
-    trjElement.textContent = "TRJ: Non calculable";
-    trjElement.style.fontWeight = "bold";
-    trjElement.style.color = "#FF0000"; // Rouge pour signaler une erreur
-    trjElement.style.marginTop = "10px";
-    trjElement.style.zIndex = "10";
-    trjElement.style.textAlign = "center";
-    marketElement.appendChild(trjElement);
+  if (marketElement.querySelector(".trj-element")) {
+    console.log("TRJ déjà présent, ajout évité.");
     return;
   }
 
-  if (odds.length > 0) {
-    console.log(`Cotes trouvées: ${odds.join(", ")}`);
-  } else {
-    console.log("Aucune cote trouvée dans cet élément de marché.");
+  const oddsElements = marketElement.querySelectorAll(
+    ".oddbox-content .oddbox-value span"
+  );
+  const odds = Array.from(oddsElements, (el) =>
+    el.textContent.trim().replace(/\s+/g, "")
+  ).filter((odd) => odd !== "-" && !isNaN(parseFloat(odd)));
+
+  if (odds.length === 0) {
+    console.log(
+      "Aucune cote trouvée ou cote invalide détectée. TRJ non calculable."
+    );
+    appendTRJElement(marketElement, "Non calculable", "#FF0000");
+    return;
   }
 
+  console.log(`Cotes trouvées: ${odds.join(", ")}`);
   if (odds.length === 2 || odds.length === 3) {
     const trj = calculateTRJ(odds);
-    const trjElement = document.createElement("div");
-    trjElement.textContent = `TRJ: ${trj}`;
-    trjElement.style.fontWeight = "bold";
-    trjElement.style.marginTop = "5px"; // Espace entre les cotes et le TRJ
-    trjElement.style.zIndex = "10";
-    trjElement.style.textAlign = "center";
-
-    // Appliquer la couleur en fonction du TRJ
-    const trjValue = parseFloat(trj.replace("%", ""));
-    if (trjValue < 80) {
-      trjElement.style.color = "#FF0000"; // Rouge pour TRJ défavorable
-    } else if (trjValue >= 80 && trjValue < 90) {
-      trjElement.style.color = "#FFA500"; // Orange pour TRJ correct
-    } else if (trjValue >= 90 && trjValue <= 100) {
-      trjElement.style.color = "#008000"; // Vert pour TRJ favorable
-    } else if (trjValue > 100) {
-      trjElement.style.color = "#0000FF"; // Bleu pour situation de surebet
-    }
-
-    // Insérer le TRJ à la fin de l'élément odds__container
-    const oddsWrapper = marketElement.closest(".odds__container");
-    if (oddsWrapper) {
-      oddsWrapper.appendChild(trjElement);
-
-      // Ajouter le style height: auto à l'élément parent contenant la classe odds__wrapper
-      const wrapperElement = oddsWrapper.closest(".odds__wrapper");
-      if (wrapperElement) {
-        wrapperElement.style.height = "auto";
-      }
-    } else {
-      console.log("odds__container introuvable, ajout du TRJ par défaut.");
-      marketElement.appendChild(trjElement);
-    }
+    appendTRJElement(marketElement, trj, determineTRJColor(parseFloat(trj)));
+    adjustHeight(".odds__wrapper", "auto");
+    adjustHeight(".headline-footer", "30vh");
   } else {
     console.log(
-      `Nombre de cotes détectées: ${odds.length}. Nécessaire pour calculer un TRJ: 2 ou 3.`
+      `Nombre de cotes détectées: ${odds.length}. TRJ non calculable.`
     );
   }
 }
 
-function processUnibetMarkets() {
-  const marketElements = document.querySelectorAll(".eventcard-footer");
+// Fonction pour ajouter un élément de TRJ au DOM
+function appendTRJElement(marketElement, trj, color) {
+  const trjElement = document.createElement("div");
+  trjElement.className = "trj-element";
+  trjElement.textContent = `TRJ: ${trj}`;
+  trjElement.style = `
+    font-weight: bold;
+    margin-top: 10px;
+    color: ${color};
+    text-align: center;
+    z-index: 10;
+  `;
+  marketElement.appendChild(trjElement);
+}
 
+// Fonction pour déterminer la couleur du TRJ en fonction de sa valeur
+function determineTRJColor(trjValue) {
+  if (trjValue < 80) return "#FF0000";
+  if (trjValue < 90) return "#FFA500";
+  if (trjValue <= 100) return "#008000";
+  return "#0000FF";
+}
+
+// Fonction pour ajuster la hauteur des éléments
+function adjustHeight(selector, height) {
+  document
+    .querySelectorAll(selector)
+    .forEach((el) => (el.style.height = height));
+}
+
+// Fonction principale pour traiter tous les marchés Unibet sur la page
+function processUnibetMarkets() {
+  const marketElements = document.querySelectorAll(
+    ".eventcard-odds, .odds__container"
+  );
   console.log(`Nombre total de marchés trouvés: ${marketElements.length}`);
 
   marketElements.forEach((marketElement, index) => {
-    try {
-      if (!marketElement.hasAttribute("data-trj-processed")) {
-        console.log(`Traitement du marché ${index + 1}`);
-
-        logMatchInfoUnibet(marketElement);
-        addTRJToMarketUnibet(marketElement);
-
-        // Marquer cet élément comme traité
-        marketElement.setAttribute("data-trj-processed", "true");
-      }
-    } catch (error) {
-      console.error(`Erreur lors du traitement du marché ${index + 1}:`, error);
+    if (!marketElement.hasAttribute("data-trj-processed")) {
+      console.log(`Traitement du marché ${index + 1}`);
+      logMatchInfoUnibet(marketElement);
+      addTRJToMarketUnibet(marketElement);
+      marketElement.setAttribute("data-trj-processed", "true");
     }
   });
 }
 
+// Fonction pour observer les changements dans le DOM et traiter les nouveaux marchés
 export function observeUnibetMarkets() {
-  processUnibetMarkets(); // Traiter les éléments déjà présents au chargement de la page
+  processUnibetMarkets(); // Traiter les éléments présents au chargement de la page
 
-  const observer = new MutationObserver(() => {
-    processUnibetMarkets(); // Traiter les nouveaux éléments ajoutés dynamiquement
-  });
-
+  const observer = new MutationObserver(() => processUnibetMarkets());
   observer.observe(document.body, { childList: true, subtree: true });
 
   console.log("Observation des changements dans le DOM activée pour Unibet.");

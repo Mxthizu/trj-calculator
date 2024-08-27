@@ -4,13 +4,16 @@
   "description": "## Description",
   "main": "background.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npx webpack && zip -r extension.zip dist/ icons/ manifest.json background.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "glob": "^11.0.0",
+    "terser-webpack-plugin": "^5.3.10",
     "webpack": "^5.94.0",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "webpack-obfuscator": "^3.5.1"
   }
 }

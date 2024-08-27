@@ -1,11 +1,19 @@
 const path = require("path");
+const TerserPlugin = require("terser-webpack-plugin");
+const glob = require("glob");
 
 module.exports = {
-  mode: "development",
-  entry: "./scripts/content.js",
+  mode: "production",
+  entry: glob.sync(path.resolve(__dirname, "scripts/**/*.js")), // Utiliser path.resolve
   output: {
-    filename: "content.js",
+    filename: "[name].js",
     path: path.resolve(__dirname, "dist"),
   },
-  devtool: false, // Désactiver l'utilisation de eval pour les sourcemaps
+  optimization: {
+    minimize: true,
+    minimizer: [new TerserPlugin()],
+  },
+  resolve: {
+    extensions: [".js"],
+  },
 };

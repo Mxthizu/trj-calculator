@@ -1,6 +1,6 @@
 chrome.action.onClicked.addListener((tab) => {
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
-    files: ["content.js"],
+    files: ["dist/main.js"], // Chemin mis à jour pour pointer vers le fichier minifié
   });
 });

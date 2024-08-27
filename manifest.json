@@ -15,7 +15,7 @@
         "https://*.parionssport.fdj.fr/*",
         "https://*.winamax.fr/*"
       ],
-      "js": ["dist/content.js"]
+      "js": ["dist/main.js"]
     }
   ],
   "icons": {

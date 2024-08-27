@@ -1,5 +1,5 @@
 import { calculateAndDisplayTRJ } from "./trjCalculator.js";
-import { observeBetclicMarkets } from "./trjBetclic.js"; // Mise à jour ici
+import { observeBetclicMarkets } from "./trjBetclic.js";
 import { observeWinamaxMarkets } from "./trjWinamax.js";
 import { observeUnibetMarkets } from "./trjUnibet.js";
 import { observeParionsSportMarkets } from "./trjParionssport.js";
@@ -18,6 +18,8 @@ function isBetclicMatchPage(url) {
 function handlePageLogic() {
   const hostname = window.location.hostname;
   const currentUrl = window.location.href;
+
+  console.log(`Host: ${hostname}, URL: ${currentUrl}`);
 
   if (hostname.includes("betclic.fr")) {
     const isMatchPage = isBetclicMatchPage(currentUrl);
@@ -43,6 +45,7 @@ function handlePageLogic() {
     if (isMatchPage) {
       calculateAndDisplayTRJ(true); // Page de match unique
     } else {
+      console.log("Observation des marchés Unibet démarrée");
       observeUnibetMarkets();
       calculateAndDisplayTRJ(false); // Page listant plusieurs matchs
     }
@@ -59,6 +62,7 @@ function handlePageLogic() {
 }
 
 window.addEventListener("load", function () {
+  console.log("Page complètement chargée");
   handlePageLogic();
 
   // Surveiller les changements d'URL pour appliquer la logique TRJ
